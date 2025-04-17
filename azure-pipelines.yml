@@ -166,11 +166,25 @@ stages:
           - download: current
             artifact: drop
 
+          # Find .jar path dynamically and set it as variable
+          - task: Bash@3
+            displayName: 'Find .jar path'
+            name: SetJarPath
+            inputs:
+              targetType: 'inline'
+              script: |
+                echo "##[group]Searching for .jar"
+                JAR_PATH=$(find $(Pipeline.Workspace)/drop -name "*.jar" | head -n 1)
+                echo "Found jar: $JAR_PATH"
+                echo "##vso[task.setvariable variable=jarPath]$JAR_PATH"
+                echo "##[endgroup]"
+
+          # Deploy the .jar file to Azure App Service
           - task: AzureWebApp@1
             inputs:
-              azureSubscription: 'AzureforStudents'  # CHANGE THIS!
+              azureSubscription: 'AzureforStudents'
               appName: 'BoardGameApp'
-              package: $(Pipeline.Workspace)/drop/*.jar  # ✅ FIXED
+              package: '$(jarPath)'
 
           - task: Bash@3
             displayName: 'Run OWASP ZAP Scan via Docker'
@@ -189,7 +203,7 @@ stages:
                   softwaresecurityproject/zap-stable \
                   zap-full-scan.py \
                   -t https://boardgameapp-ayghd3hyfcbkbafd.centralindia-01.azurewebsites.net \
-                  -J zap_report.json -r zap_report.html || true  # ✅ PREVENT FAILURE ON WARNINGS
+                  -J zap_report.json -r zap_report.html
 
           - task: PublishBuildArtifacts@1
             inputs:
