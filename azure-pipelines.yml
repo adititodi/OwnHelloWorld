@@ -71,7 +71,7 @@ stages:
             inputs:
               azureSubscription: 'AzureforStudents'  # CHANGE THIS!
               appName: 'BoardGameApp'
-              package: $(Pipeline.Workspace)/drop/*.jar
+              package: $(Pipeline.Workspace)/drop/**/target/*.jar
 
           - task: Bash@3
             displayName: 'Run OWASP ZAP Scan via Docker'
