@@ -5,7 +5,6 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  SONAR_TOKEN: $(SONAR_TOKEN)
   MAVEN_OPTS: "-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository"
 
 stages:
@@ -16,7 +15,7 @@ stages:
     - task: JavaToolInstaller@0
       inputs:
         versionSpec: '17'
-        jdkArchitecture: 'x64'
+        jdkArchitectureOption: 'x64'
         jdkSourceOption: 'PreInstalled'
 
     - task: Maven@3
