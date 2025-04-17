@@ -32,7 +32,7 @@ stages:
         organization: '321114110002'
         scannerMode: 'CLI'
         configMode: 'manual'
-        cliProjectKey: 'java-app'
+        cliProjectKey: '321114110002_JAVA-CI-CD'
         cliProjectName: 'JAVA CI CD'
         extraProperties: |
           sonar.java.binaries=target
