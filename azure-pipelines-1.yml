@@ -1,8 +1,3 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
 - main
 
@@ -72,11 +67,16 @@ stages:
           - download: current
             artifact: drop
 
+          - script: |
+              echo "Listing contents of drop folder:"
+              ls -R $(Pipeline.Workspace)/drop
+            displayName: 'Debug: List drop contents'
+
           - task: AzureWebApp@1
             inputs:
               azureSubscription: 'AzureforStudents'
               appName: 'BoardGameApp'
-              package: '$(Pipeline.Workspace)/drop/*.jar'
+              package: '$(Pipeline.Workspace)/drop/**/*.jar'
 
           - task: Bash@3
             displayName: 'Run OWASP ZAP Scan via Docker'
