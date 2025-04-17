@@ -97,6 +97,121 @@
 #               PathtoPublish: '$(System.DefaultWorkingDirectory)/zap'
 #               ArtifactName: 'ZAP-Report'
 #               publishLocation: 'Container'
+# trigger:
+# - main
+
+# pool:
+#   vmImage: ubuntu-latest
+
+# variables:
+#   MAVEN_OPTS: "-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository"
+
+# stages:
+# - stage: BuildAndAnalyze
+#   jobs:
+#   - job: MavenBuild
+#     steps:
+#     - task: JavaToolInstaller@0
+#       inputs:
+#         versionSpec: '17'
+#         jdkArchitectureOption: 'x64'
+#         jdkSourceOption: 'PreInstalled'
+
+#     - task: Maven@3
+#       inputs:
+#         mavenPomFile: 'pom.xml'
+#         goals: 'clean package'
+#         javaHomeOption: 'JDKVersion'
+#         jdkVersionOption: '1.17'
+#         mavenOptions: '-Xmx1024m'
+
+#     - task: SonarCloudPrepare@1
+#       inputs:
+#         SonarCloud: 'SonarQube Cloud'
+#         organization: '321114110002'
+#         scannerMode: 'CLI'
+#         configMode: 'manual'
+#         cliProjectKey: '321114110002_JAVA-CI-CD'
+#         cliProjectName: 'JAVA CI CD'
+#         extraProperties: |
+#           sonar.java.binaries=target
+
+#     - task: SonarCloudAnalyze@1
+
+#     - task: SonarCloudPublish@1
+#       inputs:
+#         pollingTimeoutSec: '300'
+
+#     - task: CopyFiles@2
+#       inputs:
+#         contents: '**/target/*.jar'
+#         targetFolder: '$(Build.ArtifactStagingDirectory)'
+
+#     - task: PublishBuildArtifacts@1
+#       inputs:
+#         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#         ArtifactName: 'drop'
+#         publishLocation: 'Container'
+
+# - stage: DeployAndScan
+#   dependsOn: BuildAndAnalyze
+#   condition: succeeded()
+#   jobs:
+#   - deployment: DeployApp
+#     environment: 'production'
+#     strategy:
+#       runOnce:
+#         deploy:
+#           steps:
+#           - download: current
+#             artifact: drop
+
+#           # Find .jar path dynamically and set it as variable
+#           - task: Bash@3
+#             displayName: 'Find .jar path'
+#             name: SetJarPath
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 echo "##[group]Searching for .jar"
+#                 JAR_PATH=$(find $(Pipeline.Workspace)/drop -name "*.jar" | head -n 1)
+#                 echo "Found jar: $JAR_PATH"
+#                 echo "##vso[task.setvariable variable=jarPath]$JAR_PATH"
+#                 echo "##[endgroup]"
+
+#           # Deploy the .jar file to Azure App Service
+#           - task: AzureWebApp@1
+#             inputs:
+#               azureSubscription: 'AzureforStudents'
+#               appName: 'BoardGameApp'
+#               package: '$(jarPath)'
+
+#           - task: Bash@3
+#             displayName: 'Run OWASP ZAP Scan via Docker'
+#             inputs:
+#               targetType: 'inline'
+#               script: |
+#                 echo "Pulling ZAP image..."
+#                 docker pull softwaresecurityproject/zap-stable:latest
+
+#                 mkdir -p $(System.DefaultWorkingDirectory)/zap
+#                 chmod 777 $(System.DefaultWorkingDirectory)/zap
+
+#                 echo "Running ZAP scan..."
+#                 docker run --rm -u 0 \
+#                   -v $(System.DefaultWorkingDirectory)/zap:/zap/wrk/:rw \
+#                   softwaresecurityproject/zap-stable \
+#                   zap-full-scan.py \
+#                   -t https://boardgameapp-ayghd3hyfcbkbafd.centralindia-01.azurewebsites.net \
+#                   -J zap_report.json -r zap_report.html
+
+#           - task: PublishBuildArtifacts@1
+#             inputs:
+#               PathtoPublish: '$(System.DefaultWorkingDirectory)/zap'
+#               ArtifactName: 'ZAP-Report'
+#               publishLocation: 'Container'
+
+
 trigger:
 - main
 
